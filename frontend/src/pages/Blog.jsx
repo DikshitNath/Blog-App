@@ -5,25 +5,51 @@ import Navbar from '../components/Navbar.jsx'
 import Moment from 'moment'
 import Footer from '../components/Footer.jsx'
 import Loader from '../components/Loader.jsx'
+import { useAppContext } from '../context/AppContext.jsx'
+import toast from 'react-hot-toast'
 
 const Blog = () => {
   const { id } = useParams()
+
+  const {axios} = useAppContext();
+
   const [data, setData] = useState(null)
   const [comments, setComments] = useState([])
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
 
   const fetchBlogData = async () => {
-    const data = blog_data.find(item => item._id === id)
-    setData(data)
+    try {
+      const {data} = await axios.get(`/api/blog/${id}`);
+      data.success ? setData(data.blog) : toast.error(data.message);
+    } catch (error) {
+      toast.error(error.message);
+    }
   }
 
   const fetchComments = async () => {
-    setComments(comments_data)
+  try {
+    const { data } = await axios.post('/api/blog/comments', { blogId: id });
+      data.success ? setComments(data.comments) : toast.error(data.message);
+    } catch (error) {
+      toast.error(error.message);
+    }
   }
-
+  
   const addComment = async (e) => {
     e.preventDefault()
+    try {
+      const { data } = await axios.post('/api/blog/add-comment', { blog: id, name, content});
+      if (data.success) {
+        toast.success(data.message);
+        setName('');
+        setContent('');
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
   }
 
   useEffect(() => {
@@ -69,8 +95,8 @@ const Blog = () => {
           <p className='font-semibold mb-4'>Add your comment</p>
           <form onSubmit={addComment} className='flex flex-col items-start gap-4 max-w-lg'>
             <input onChange={(e) => setName(e.target.value)} value={name} type="text" placeholder='Name' required className='w-full p-2 border border-gray-300 rounded outline-none'/>
-            <textarea placeholder='Comment' required className='w-full p-2 border border-gray-300 rounded outline-none h-48'></textarea>
-            <button onChange={(e) => setContent(e.target.value)} value={content} type='submit' className='bg-primary text-white rounded p-2 px-8 hover:scale-102 transition-all cursor-pointer'>Submit</button>
+            <textarea onChange={(e) => setContent(e.target.value)} value={content}  placeholder='Comment' required className='w-full p-2 border border-gray-300 rounded outline-none h-48'></textarea>
+            <button type='submit' className='bg-primary text-white rounded p-2 px-8 hover:scale-102 transition-all cursor-pointer'>Submit</button>
           </form>
         </div>
 
